@@ -2,12 +2,14 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SkillSync Elite | AI Career Intelligence</title>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+
     <style>
         :root {
             --glass: rgba(255, 255, 255, 0.03);
@@ -16,7 +18,7 @@
             --text: #f8fafc; --text-dim: #94a3b8;
         }
 
-        * { box-sizing: border-box; transition: all 0.3s ease; }
+        * { box-sizing: border-box; transition: all 0.3s ease; -webkit-tap-highlight-color: transparent; }
         body { 
             font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text);
             margin: 0; min-height: 100vh; display: flex; overflow-x: hidden;
@@ -29,122 +31,92 @@
         .auth-card { background: var(--glass); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); padding: 40px; border-radius: 40px; width: 100%; max-width: 450px; text-align: center; box-shadow: 0 25px 50px rgba(0,0,0,0.5); }
         .auth-input { width: 100%; padding: 16px; border-radius: 14px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.3); color: white; margin-bottom: 15px; outline: none; font-size: 16px; }
         .btn-glow { background: var(--primary); color: white; border: none; padding: 18px; border-radius: 14px; width: 100%; font-weight: 800; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 0 20px rgba(99, 102, 241, 0.4); }
-        .btn-glow:hover { transform: translateY(-3px); box-shadow: 0 0 30px rgba(99, 102, 241, 0.6); }
+        .btn-glow:active { transform: scale(0.98); }
 
         /* --- DASHBOARD LAYOUT --- */
         #main-app { display: none; width: 100%; flex-direction: row; }
         .sidebar { width: 300px; background: rgba(0,0,0,0.4); border-right: 1px solid var(--glass-border); padding: 50px 25px; display: flex; flex-direction: column; height: 100vh; position: sticky; top: 0; }
         .nav-item { padding: 18px 25px; border-radius: 16px; margin-bottom: 10px; color: var(--text-dim); cursor: pointer; display: flex; align-items: center; gap: 15px; font-weight: 700; border: 1px solid transparent; }
-        .nav-item:hover, .nav-item.active { background: var(--glass); color: var(--primary); border-color: var(--glass-border); }
+        .nav-item.active { background: var(--glass); color: var(--primary); border-color: var(--glass-border); }
 
         .content { flex: 1; padding: 40px; }
         .command-center { display: grid; grid-template-columns: 1fr 400px; gap: 30px; }
-        .panel { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 35px; padding: 30px; position: relative; overflow: hidden; }
+        .panel { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 35px; padding: 30px; position: relative; }
         
-        /* Stats & Score */
-        .radial-score { width: 200px; height: 200px; margin: 0 auto 20px; position: relative; display: flex; align-items: center; justify-content: center; }
-        .progress-ring { transform: rotate(-90deg); width: 200px; height: 200px; }
-        .progress-ring__circle { fill: transparent; stroke: var(--primary); stroke-width: 12; stroke-dasharray: 565; stroke-dashoffset: 565; stroke-linecap: round; transition: stroke-dashoffset 1s ease; }
-        .score-val { position: absolute; font-size: 48px; font-weight: 800; letter-spacing: -2px; }
+        .radial-score { width: 180px; height: 180px; margin: 0 auto 20px; position: relative; display: flex; align-items: center; justify-content: center; }
+        .progress-ring { transform: rotate(-90deg); width: 180px; height: 180px; }
+        .progress-ring__circle { fill: transparent; stroke: var(--primary); stroke-width: 12; stroke-dasharray: 565; stroke-dashoffset: 565; stroke-linecap: round; }
+        .score-val { position: absolute; font-size: 42px; font-weight: 800; }
 
-        textarea { width: 100%; height: 200px; background: rgba(0,0,0,0.4); border: 1px solid var(--glass-border); border-radius: 25px; padding: 20px; color: white; font-family: inherit; resize: none; outline: none; margin-top: 20px; font-size: 15px; line-height: 1.6; }
+        textarea { width: 100%; height: 180px; background: rgba(0,0,0,0.4); border: 1px solid var(--glass-border); border-radius: 25px; padding: 20px; color: white; font-family: inherit; resize: none; outline: none; margin-top: 20px; font-size: 16px; }
 
-        .tag { display: inline-block; padding: 8px 18px; border-radius: 12px; margin: 5px; font-size: 13px; font-weight: 700; background: rgba(16,185,129,0.1); color: var(--accent); border: 1px solid rgba(16,185,129,0.2); }
-        .tag-sec { background: rgba(99,102,241,0.1); color: var(--primary); border: 1px solid rgba(99,102,241,0.2); }
+        .tag { display: inline-block; padding: 6px 14px; border-radius: 10px; margin: 4px; font-size: 12px; font-weight: 700; background: rgba(16,185,129,0.1); color: var(--accent); border: 1px solid rgba(16,185,129,0.2); }
 
-        .h-row { display: grid; grid-template-columns: 1fr 2fr 1fr; padding: 15px; border-bottom: 1px solid var(--glass-border); font-weight: 600; font-size: 14px; }
-
-        /* --- MOBILE RESPONSIVE QUERIES --- */
-        @media (max-width: 1100px) {
-            .command-center { grid-template-columns: 1fr; }
-        }
-
+        /* Mobile Fixes */
         @media (max-width: 768px) {
-            body { flex-direction: column; overflow-y: auto; }
             #main-app { flex-direction: column; }
-            .sidebar { 
-                width: 100%; height: auto; padding: 20px; 
-                flex-direction: row; border-right: none; 
-                border-bottom: 1px solid var(--glass-border);
-                justify-content: space-around; position: relative;
-            }
-            .sidebar > div:first-child { display: none; }
-            .nav-item { margin-bottom: 0; padding: 12px; font-size: 12px; flex-direction: column; gap: 5px; }
+            .sidebar { width: 100%; height: auto; padding: 15px; flex-direction: row; position: relative; justify-content: space-around; }
+            .sidebar div:first-child { display: none; }
+            .nav-item { margin: 0; padding: 10px; font-size: 12px; flex-direction: column; gap: 4px; }
             .content { padding: 20px; }
-            h1 { font-size: 28px !important; }
-            .panel { padding: 20px; border-radius: 25px; }
-            .h-row { grid-template-columns: 1fr 1fr; gap: 10px; }
-            .h-row div:nth-child(2) { display: none; }
+            .command-center { grid-template-columns: 1fr; }
+            .h-row { grid-template-columns: 1fr 1fr; }
         }
 
-        /* --- PDF BOX STYLING --- */
-        #pdf-box {
-            background: white !important;
-            color: #1a1a1a !important;
-            padding: 50px;
-            border-radius: 10px;
-        }
-        #pdf-box h1 { color: #6366f1 !important; margin-bottom: 10px; }
-        #pdf-box .audit-line { border-bottom: 2px solid #eee; margin: 20px 0; }
+        #pdf-box { background: white !important; color: #1a1a1a !important; padding: 50px; }
     </style>
 </head>
 <body>
 
     <div id="auth-gate">
         <div class="auth-card">
-            <h1 style="margin-top:0; font-size:32px; letter-spacing:-1px">SkillSync<span style="color:var(--primary)">.Elite</span></h1>
-            <p style="color:var(--text-dim); margin-bottom:30px">High-fidelity career intelligence platform.</p>
-            
+            <h1>SkillSync<span style="color:var(--primary)">.Elite</span></h1>
             <div id="auth-tabs" style="display:flex; gap:10px; margin-bottom:25px; background:rgba(0,0,0,0.2); padding:5px; border-radius:12px">
-                <div onclick="setAuth('login')" id="t-login" style="flex:1; padding:10px; cursor:pointer; border-radius:8px" class="active-tab">Login</div>
-                <div onclick="setAuth('reg')" id="t-reg" style="flex:1; padding:10px; cursor:pointer; border-radius:8px; color:var(--text-dim)">Register</div>
+                <div onclick="setAuth('login')" id="t-login" style="flex:1; padding:10px; cursor:pointer; border-radius:8px">Login</div>
+                <div onclick="setAuth('reg')" id="t-reg" style="flex:1; padding:10px; cursor:pointer; border-radius:8px">Register</div>
             </div>
-
-            <div id="reg-name" style="display:none"><input type="text" id="a-name" class="auth-input" placeholder="Your Full Name"></div>
-            <input type="email" id="a-email" class="auth-input" placeholder="Corporate Email">
+            <div id="reg-name" style="display:none"><input type="text" id="a-name" class="auth-input" placeholder="Name"></div>
+            <input type="email" id="a-email" class="auth-input" placeholder="Email">
             <input type="password" id="a-pass" class="auth-input" placeholder="Access Key">
-            <button class="btn-glow" onclick="handleAuth()">Initialize Portal</button>
-            <p id="a-err" style="color:#ef4444; font-size:12px; margin-top:15px"></p>
+            <button class="btn-glow" onclick="handleAuth()">Initialize</button>
         </div>
     </div>
 
     <div id="main-app">
         <nav class="sidebar">
-            <div style="font-size:24px; font-weight:800; margin-bottom:40px">SkillSync <i class="fas fa-bolt" style="color:var(--primary)"></i></div>
+            <div style="font-size:22px; font-weight:800; margin-bottom:30px">SkillSync <i class="fas fa-bolt"></i></div>
             <div class="nav-item active" onclick="tab('dash', this)"><i class="fas fa-layer-group"></i> Intelligence</div>
-            <div class="nav-item" onclick="tab('hist', this)"><i class="fas fa-database"></i> Match Vault</div>
+            <div class="nav-item" onclick="tab('hist', this)"><i class="fas fa-database"></i> Vault</div>
             <div class="nav-item" style="color:#ef4444" onclick="location.reload()"><i class="fas fa-power-off"></i> Exit</div>
         </nav>
 
         <div class="content">
             <div id="dash" class="page">
-                <h1 style="font-size:36px; font-weight:800; margin-bottom:10px">System Dashboard</h1>
                 <div class="command-center">
                     <div class="panel">
-                        <h3 style="margin-top:0; display:flex; align-items:center; gap:10px"><i class="fas fa-file-import"></i> Data Input</h3>
-                        <div style="border: 2px dashed var(--glass-border); padding: 30px; border-radius: 25px; text-align: center; cursor: pointer;" onclick="document.getElementById('f').click()">
-                            <i class="fas fa-microchip fa-2x" style="color:var(--primary); margin-bottom:15px"></i>
-                            <p id="fLab"><b>Inject Resume</b> (TXT/PDF)</p>
-                            <input type="file" id="f" hidden onchange="handleFile(event)">
+                        <h3 style="margin-top:0"><i class="fas fa-file-import"></i> Data Input</h3>
+                        <div id="drop-zone" style="border: 2px dashed var(--glass-border); padding: 30px; border-radius: 25px; text-align: center; cursor: pointer;" onclick="document.getElementById('f').click()">
+                            <i class="fas fa-cloud-upload-alt fa-2x" style="color:var(--primary); margin-bottom:10px"></i>
+                            <p id="fLab" style="margin:0"><b>Upload Resume</b><br><small>(PDF/TXT)</small></p>
+                            <input type="file" id="f" hidden accept=".pdf,.txt" onchange="handleFile(event)">
                         </div>
-                        <textarea id="jd" oninput="run()" placeholder="Paste Job Description..."></textarea>
+                        <textarea id="jd" oninput="run()" placeholder="Paste Job Description here..."></textarea>
                     </div>
 
                     <div class="panel" style="text-align:center">
                         <div class="radial-score">
-                            <svg class="progress-ring" width="200" height="200">
-                                <circle cx="100" cy="100" r="90" fill="transparent" stroke="rgba(255,255,255,0.05)" stroke-width="12"/>
-                                <circle id="ring" class="progress-ring__circle" cx="100" cy="100" r="90"/>
+                            <svg class="progress-ring" width="180" height="180">
+                                <circle cx="90" cy="90" r="80" fill="transparent" stroke="rgba(255,255,255,0.05)" stroke-width="12"/>
+                                <circle id="ring" class="progress-ring__circle" cx="90" cy="90" r="80"/>
                             </svg>
                             <div class="score-val" id="score">0%</div>
                         </div>
-                        <h3>Strategic Alignment</h3>
-                        <div id="results" style="text-align:left"></div>
-                        <button class="btn-glow" id="pdfBtn" style="display:none; margin-top:20px; background:var(--accent)" onclick="exportPDF()">Export Audit PDF</button>
+                        <h3>Match Results</h3>
+                        <div id="results" style="text-align:left; min-height: 50px;"></div>
+                        <button class="btn-glow" id="pdfBtn" style="display:none; margin-top:20px; width:100%; background:var(--accent)" onclick="exportPDF()">Download Audit</button>
                     </div>
                 </div>
             </div>
-
             <div id="hist" class="page" style="display:none">
                 <h1>Match Vault</h1>
                 <div class="panel" id="histList"></div>
@@ -152,45 +124,46 @@
         </div>
     </div>
 
-    <div id="pdf-box" style="display:none;">
-        <h1>EXECUTIVE SKILL AUDIT</h1>
-        <div class="audit-line"></div>
-        <p><strong>Analysis Status:</strong> Finalized</p>
+    <div id="pdf-box" style="display:none; font-family: Arial, sans-serif;">
+        <h1 style="color:#6366f1">SKILLSYNC ELITE AUDIT</h1>
+        <hr>
         <p id="p-dt"></p>
-        <div class="audit-line"></div>
-        <h2 id="p-sc" style="font-size: 40px; color: #6366f1;"></h2>
-        <div class="audit-line"></div>
-        <h3>Verified Skill Clusters:</h3>
-        <p id="p-sk" style="font-size: 18px; line-height: 1.6;"></p>
+        <h2 id="p-sc" style="font-size:32px"></h2>
+        <h3>Key Skills Identified:</h3>
+        <p id="p-sk"></p>
         <br><br>
-        <p style="font-size: 12px; color: #888;">Generated by SkillSync Elite Intelligence Portal</p>
+        <p style="color:#888; font-size:12px">Verified by AI Career Intelligence System</p>
     </div>
 
     <script>
+        // PDF.js worker setup
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+
         let resTxt = ""; let authM = "login"; let curUser = "";
-        const TECH = ["python", "odoo", "javascript", "react", "sql", "aws", "docker", "django", "java", "excel", "machine learning", "html", "css"];
+        const TECH = ["python", "odoo", "javascript", "react", "sql", "aws", "docker", "django", "java", "excel", "html", "css", "node", "git", "api"];
         const ACT = ["built", "implemented", "scaled", "managed", "designed", "optimized", "led", "developed"];
 
         function setAuth(m) {
             authM = m;
-            document.getElementById('t-login').style.color = m==='login' ? 'var(--primary)' : 'var(--text-dim)';
-            document.getElementById('t-reg').style.color = m==='reg' ? 'var(--primary)' : 'var(--text-dim)';
+            document.getElementById('t-login').className = m==='login' ? 'active-tab' : '';
+            document.getElementById('t-reg').className = m==='reg' ? 'active-tab' : '';
             document.getElementById('reg-name').style.display = m==='reg' ? 'block' : 'none';
         }
+        setAuth('login');
 
         function handleAuth() {
             const e = document.getElementById('a-email').value;
             const p = document.getElementById('a-pass').value;
-            if(!e || !p) return alert("Credentials Required");
+            if(!e || !p) return alert("Enter credentials");
             if(authM === 'reg') {
                 localStorage.setItem(e, JSON.stringify({pass:p, name:document.getElementById('a-name').value, history:[]}));
-                alert("Vault Created."); setAuth('login');
+                alert("Account created!"); setAuth('login');
             } else {
                 const u = JSON.parse(localStorage.getItem(e));
                 if(u && u.pass === p) {
                     curUser = e; document.getElementById('auth-gate').style.display='none';
                     document.getElementById('main-app').style.display='flex';
-                } else { alert("Access Denied."); }
+                } else { alert("Invalid access."); }
             }
         }
 
@@ -202,11 +175,38 @@
             if(t === 'hist') loadHist();
         }
 
-        function handleFile(e) {
+        // --- FIXED FILE HANDLER FOR MOBILE & PDF ---
+        async function handleFile(e) {
             const f = e.target.files[0];
-            const r = new FileReader();
-            r.onload = (ev) => { resTxt = ev.target.result; document.getElementById('fLab').innerText = f.name; run(); };
-            r.readAsText(f);
+            if(!f) return;
+            const fLab = document.getElementById('fLab');
+            fLab.innerHTML = "Processing...";
+
+            if (f.type === "application/pdf") {
+                const reader = new FileReader();
+                reader.onload = async function() {
+                    const typedarray = new Uint8Array(this.result);
+                    const pdf = await pdfjsLib.getDocument(typedarray).promise;
+                    let fullText = "";
+                    for (let i = 1; i <= pdf.numPages; i++) {
+                        const page = await pdf.getPage(i);
+                        const txt = await page.getTextContent();
+                        fullText += txt.items.map(s => s.str).join(" ");
+                    }
+                    resTxt = fullText;
+                    fLab.innerHTML = `<i class="fas fa-check-circle" style="color:var(--accent)"></i> ${f.name}`;
+                    run();
+                };
+                reader.readAsArrayBuffer(f);
+            } else {
+                const reader = new FileReader();
+                reader.onload = (ev) => { 
+                    resTxt = ev.target.result; 
+                    fLab.innerHTML = `<i class="fas fa-check-circle" style="color:var(--accent)"></i> ${f.name}`;
+                    run(); 
+                };
+                reader.readAsText(f);
+            }
         }
 
         function run() {
@@ -215,52 +215,55 @@
 
             const rWords = resTxt.toLowerCase().match(/\b(\w+)\b/g) || [];
             const fSk = TECH.filter(s => rWords.includes(s));
-            const fPr = ACT.filter(a => rWords.includes(a));
-            const jdTerms = [...new Set(jd.match(/\b(\w{4,})\b/g))].filter(w => !["want", "find", "looking"].includes(w));
             
-            let matches = [];
-            jdTerms.forEach(t => { if(rWords.includes(t)) matches.push(t); });
+            // Smarter matching logic
+            const jdTerms = [...new Set(jd.match(/\b(\w{4,})\b/g))].filter(w => !["want", "find", "looking", "must", "with"].includes(w));
+            let matches = jdTerms.filter(t => rWords.includes(t));
 
-            const sc = Math.round((matches.length / jdTerms.length) * 100) || 0;
+            const sc = jdTerms.length > 0 ? Math.round((matches.length / jdTerms.length) * 100) : 0;
             
-            // Update Dashboard
+            // Update Dashboard UI
             document.getElementById('score').innerText = sc + "%";
             document.getElementById('ring').style.strokeDashoffset = 565 - (565 * sc / 100);
-            document.getElementById('results').innerHTML = `<h4>Skills Found:</h4>` + fSk.map(s => `<span class="tag">${s}</span>`).join('');
+            document.getElementById('results').innerHTML = `<h4>Top Skills:</h4>` + 
+                (fSk.length > 0 ? fSk.map(s => `<span class="tag">${s}</span>`).join('') : "<small>No skills detected</small>");
+            
             document.getElementById('pdfBtn').style.display = 'block';
 
-            // IMPORTANT: Inject data into PDF BOX
-            document.getElementById('p-dt').innerText = "Audit Date: " + new Date().toLocaleString();
-            document.getElementById('p-sc').innerText = "Match Accuracy Score: " + sc + "%";
-            document.getElementById('p-sk').innerText = fSk.join(", ").toUpperCase() || "No specific technical keywords detected.";
+            // Sync Data to PDF Template
+            document.getElementById('p-dt').innerText = "Date: " + new Date().toLocaleString();
+            document.getElementById('p-sc').innerText = "Match Score: " + sc + "%";
+            document.getElementById('p-sk').innerText = fSk.join(", ").toUpperCase() || "N/A";
 
-            // Save to history
+            // Save history
             const u = JSON.parse(localStorage.getItem(curUser));
-            u.history.unshift({d: new Date().toLocaleDateString(), r: "Career Scan", s: sc+"%"});
-            localStorage.setItem(curUser, JSON.stringify(u));
+            if(u) {
+                u.history.unshift({d: new Date().toLocaleDateString(), s: sc+"%"});
+                localStorage.setItem(curUser, JSON.stringify(u));
+            }
         }
 
         function loadHist() {
             const u = JSON.parse(localStorage.getItem(curUser));
-            document.getElementById('histList').innerHTML = u.history.map(h => `<div class="h-row"><div>${h.d}</div><div>${h.s} Match</div></div>`).join('');
+            document.getElementById('histList').innerHTML = u.history.slice(0,10).map(h => 
+                `<div style="display:flex; justify-content:space-between; padding:15px; border-bottom:1px solid var(--glass-border)">
+                    <span>${h.d}</span><b style="color:var(--primary)">${h.s}</b>
+                </div>`).join('');
         }
 
         function exportPDF() {
             const el = document.getElementById('pdf-box');
-            el.style.display = 'block'; // Temporary show for capture
-
-            const opt = {
-                margin:       10,
-                filename:     'SkillSync_Elite_Audit.pdf',
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, logging: false, useCORS: true },
-                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            el.style.display = 'block';
+            const opt = { 
+                margin: 10, 
+                filename: 'SkillSync_Audit.pdf', 
+                html2canvas: { scale: 1.5, useCORS: true }, 
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } 
             };
-
-            // Use a slight timeout to ensure the browser has painted the text
+            
             setTimeout(() => {
                 html2pdf().from(el).set(opt).save().then(() => {
-                    el.style.display = 'none'; // Hide again
+                    el.style.display = 'none';
                 });
             }, 500);
         }
