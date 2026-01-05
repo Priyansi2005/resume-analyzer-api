@@ -62,25 +62,30 @@
         @media (max-width: 768px) {
             body { flex-direction: column; overflow-y: auto; }
             #main-app { flex-direction: column; }
-            
             .sidebar { 
                 width: 100%; height: auto; padding: 20px; 
                 flex-direction: row; border-right: none; 
                 border-bottom: 1px solid var(--glass-border);
                 justify-content: space-around; position: relative;
             }
-            .sidebar > div:first-child { display: none; } /* Hide logo on mobile sidebar to save space */
+            .sidebar > div:first-child { display: none; }
             .nav-item { margin-bottom: 0; padding: 12px; font-size: 12px; flex-direction: column; gap: 5px; }
-
             .content { padding: 20px; }
             h1 { font-size: 28px !important; }
-            
-            .auth-card { padding: 30px 20px; }
             .panel { padding: 20px; border-radius: 25px; }
-            
             .h-row { grid-template-columns: 1fr 1fr; gap: 10px; }
-            .h-row div:nth-child(2) { display: none; } /* Hide vector role on mobile history to fit */
+            .h-row div:nth-child(2) { display: none; }
         }
+
+        /* --- PDF BOX STYLING --- */
+        #pdf-box {
+            background: white !important;
+            color: #1a1a1a !important;
+            padding: 50px;
+            border-radius: 10px;
+        }
+        #pdf-box h1 { color: #6366f1 !important; margin-bottom: 10px; }
+        #pdf-box .audit-line { border-bottom: 2px solid #eee; margin: 20px 0; }
     </style>
 </head>
 <body>
@@ -114,14 +119,12 @@
         <div class="content">
             <div id="dash" class="page">
                 <h1 style="font-size:36px; font-weight:800; margin-bottom:10px">System Dashboard</h1>
-                <p style="color:var(--text-dim); margin-bottom:30px">Deep-scanning resume projects in real-time.</p>
-
                 <div class="command-center">
                     <div class="panel">
                         <h3 style="margin-top:0; display:flex; align-items:center; gap:10px"><i class="fas fa-file-import"></i> Data Input</h3>
                         <div style="border: 2px dashed var(--glass-border); padding: 30px; border-radius: 25px; text-align: center; cursor: pointer;" onclick="document.getElementById('f').click()">
                             <i class="fas fa-microchip fa-2x" style="color:var(--primary); margin-bottom:15px"></i>
-                            <p id="fLab" style="font-size: 14px;"><b>Inject Resume</b> (TXT/PDF)</p>
+                            <p id="fLab"><b>Inject Resume</b> (TXT/PDF)</p>
                             <input type="file" id="f" hidden onchange="handleFile(event)">
                         </div>
                         <textarea id="jd" oninput="run()" placeholder="Paste Job Description..."></textarea>
@@ -135,39 +138,37 @@
                             </svg>
                             <div class="score-val" id="score">0%</div>
                         </div>
-                        <h3 style="margin-bottom:20px">Strategic Alignment</h3>
-                        <div id="results" style="text-align:left">
-                            <p style="color:var(--text-dim); font-size:14px">Awaiting telemetry data...</p>
-                        </div>
-                        <button class="btn-glow" id="pdfBtn" style="display:none; margin-top:20px; background:var(--accent)" onclick="exportPDF()">Export Audit</button>
+                        <h3>Strategic Alignment</h3>
+                        <div id="results" style="text-align:left"></div>
+                        <button class="btn-glow" id="pdfBtn" style="display:none; margin-top:20px; background:var(--accent)" onclick="exportPDF()">Export Audit PDF</button>
                     </div>
                 </div>
             </div>
 
             <div id="hist" class="page" style="display:none">
                 <h1>Match Vault</h1>
-                <div class="panel" style="padding:0; overflow-x: auto;">
-                    <div class="h-row" style="background:rgba(255,255,255,0.05); color:var(--text-dim)">
-                        <div>DATE</div><div>VECTOR ROLE</div><div>SCORE</div>
-                    </div>
-                    <div id="histList"></div>
-                </div>
+                <div class="panel" id="histList"></div>
             </div>
         </div>
     </div>
 
-    <div id="pdf-box" style="display:none; padding:40px; color:#0f172a; background:white; font-family:sans-serif;">
-        <h1 style="color:#6366f1;">EXECUTIVE SKILL AUDIT</h1>
+    <div id="pdf-box" style="display:none;">
+        <h1>EXECUTIVE SKILL AUDIT</h1>
+        <div class="audit-line"></div>
+        <p><strong>Analysis Status:</strong> Finalized</p>
         <p id="p-dt"></p>
-        <h2 id="p-sc"></h2>
-        <h3>Verified Skills</h3>
-        <p id="p-sk"></p>
+        <div class="audit-line"></div>
+        <h2 id="p-sc" style="font-size: 40px; color: #6366f1;"></h2>
+        <div class="audit-line"></div>
+        <h3>Verified Skill Clusters:</h3>
+        <p id="p-sk" style="font-size: 18px; line-height: 1.6;"></p>
+        <br><br>
+        <p style="font-size: 12px; color: #888;">Generated by SkillSync Elite Intelligence Portal</p>
     </div>
 
     <script>
-        // ... (Aapka puraana JavaScript yahan rahega, mene koi change nahi kiya)
         let resTxt = ""; let authM = "login"; let curUser = "";
-        const TECH = ["python", "odoo", "javascript", "react", "sql", "aws", "docker", "django", "java", "excel"];
+        const TECH = ["python", "odoo", "javascript", "react", "sql", "aws", "docker", "django", "java", "excel", "machine learning", "html", "css"];
         const ACT = ["built", "implemented", "scaled", "managed", "designed", "optimized", "led", "developed"];
 
         function setAuth(m) {
@@ -181,16 +182,15 @@
             const e = document.getElementById('a-email').value;
             const p = document.getElementById('a-pass').value;
             if(!e || !p) return alert("Credentials Required");
-
             if(authM === 'reg') {
                 localStorage.setItem(e, JSON.stringify({pass:p, name:document.getElementById('a-name').value, history:[]}));
-                alert("Vault Created. Accessing Login..."); setAuth('login');
+                alert("Vault Created."); setAuth('login');
             } else {
                 const u = JSON.parse(localStorage.getItem(e));
                 if(u && u.pass === p) {
                     curUser = e; document.getElementById('auth-gate').style.display='none';
                     document.getElementById('main-app').style.display='flex';
-                } else { document.getElementById('a-err').innerText = "Access Denied."; }
+                } else { alert("Access Denied."); }
             }
         }
 
@@ -216,35 +216,53 @@
             const rWords = resTxt.toLowerCase().match(/\b(\w+)\b/g) || [];
             const fSk = TECH.filter(s => rWords.includes(s));
             const fPr = ACT.filter(a => rWords.includes(a));
-
             const jdTerms = [...new Set(jd.match(/\b(\w{4,})\b/g))].filter(w => !["want", "find", "looking"].includes(w));
-            let matches = [], gaps = [];
-            jdTerms.forEach(t => { if(rWords.includes(t)) matches.push(t); else gaps.push(t); });
+            
+            let matches = [];
+            jdTerms.forEach(t => { if(rWords.includes(t)) matches.push(t); });
 
             const sc = Math.round((matches.length / jdTerms.length) * 100) || 0;
             
+            // Update Dashboard
             document.getElementById('score').innerText = sc + "%";
             document.getElementById('ring').style.strokeDashoffset = 565 - (565 * sc / 100);
-            
-            document.getElementById('results').innerHTML = `<h4>Core Expertise</h4>` + 
-                fSk.map(s => `<span class="tag">${s}</span>`).join('') + 
-                `<h4>Impact Markers</h4>` + fPr.map(a => `<span class="tag tag-sec">${a}</span>`).join('');
-            
+            document.getElementById('results').innerHTML = `<h4>Skills Found:</h4>` + fSk.map(s => `<span class="tag">${s}</span>`).join('');
             document.getElementById('pdfBtn').style.display = 'block';
 
+            // IMPORTANT: Inject data into PDF BOX
+            document.getElementById('p-dt').innerText = "Audit Date: " + new Date().toLocaleString();
+            document.getElementById('p-sc').innerText = "Match Accuracy Score: " + sc + "%";
+            document.getElementById('p-sk').innerText = fSk.join(", ").toUpperCase() || "No specific technical keywords detected.";
+
+            // Save to history
             const u = JSON.parse(localStorage.getItem(curUser));
-            u.history.unshift({d: new Date().toLocaleDateString(), r: (jdTerms[0] || "VECTOR").toUpperCase(), s: sc+"%"});
+            u.history.unshift({d: new Date().toLocaleDateString(), r: "Career Scan", s: sc+"%"});
             localStorage.setItem(curUser, JSON.stringify(u));
         }
 
         function loadHist() {
             const u = JSON.parse(localStorage.getItem(curUser));
-            document.getElementById('histList').innerHTML = u.history.map(h => `<div class="h-row"><div>${h.d}</div><div>${h.r}</div><div style="color:var(--primary)">${h.s}</div></div>`).join('');
+            document.getElementById('histList').innerHTML = u.history.map(h => `<div class="h-row"><div>${h.d}</div><div>${h.s} Match</div></div>`).join('');
         }
 
         function exportPDF() {
-            const el = document.getElementById('pdf-box'); el.style.display='block';
-            html2pdf().set({margin:1, filename:'SkillSync_Elite_Audit.pdf'}).from(el).save().then(()=>el.style.display='none');
+            const el = document.getElementById('pdf-box');
+            el.style.display = 'block'; // Temporary show for capture
+
+            const opt = {
+                margin:       10,
+                filename:     'SkillSync_Elite_Audit.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, logging: false, useCORS: true },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            // Use a slight timeout to ensure the browser has painted the text
+            setTimeout(() => {
+                html2pdf().from(el).set(opt).save().then(() => {
+                    el.style.display = 'none'; // Hide again
+                });
+            }, 500);
         }
     </script>
 </body>
